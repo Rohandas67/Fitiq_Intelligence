@@ -400,7 +400,7 @@ elif page == "❤️ Heart Risk Analyzer":
         slope = st.selectbox("Slope", [0, 1, 2])
         ca = st.selectbox("Major Vessels", [0, 1, 2, 3])
         thal = st.selectbox("Thalassemia", [0, 1, 2, 3])
-            if st.button("❤️ Analyze Risk"):
+        if st.button("❤️ Analyze Risk"):
 
         sex_encoded = 1 if sex == "Male" else 0
 
