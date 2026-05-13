@@ -5,532 +5,368 @@ import plotly.express as px
 import plotly.graph_objects as go
 import joblib
 import warnings
-
 warnings.filterwarnings('ignore')
 
-# ==========================================
-# PAGE CONFIG
-# ==========================================
+# ---- Page Config ----
 st.set_page_config(
-    page_title="FitIQ Intelligence",
+    page_title="FitIQ — Health Intelligence",
     page_icon="💪",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ==========================================
-# CUSTOM STYLING
-# ==========================================
+# ---- Custom CSS for beautiful styling ----
 st.markdown("""
 <style>
-
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-}
-
-.main {
-    background: linear-gradient(180deg, #0b1020 0%, #111827 100%);
-    color: #f8fafc;
-}
-
-.block-container {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-}
-
-section[data-testid="stSidebar"] {
-    background: #0f172a;
-    border-right: 1px solid rgba(255,255,255,0.05);
-}
-
-section[data-testid="stSidebar"] * {
-    color: white;
-}
-
-.hero-title {
-    font-size: 3rem;
-    font-weight: 800;
-    letter-spacing: -1px;
-    margin-bottom: 0;
-    color: white;
-}
-
-.hero-subtitle {
-    color: #94a3b8;
-    font-size: 1.05rem;
-    margin-top: 0.3rem;
-}
-
-.metric-card {
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(18px);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 22px;
-    padding: 22px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-    transition: 0.3s ease;
-    margin-bottom: 10px;
-}
-
-.metric-card:hover {
-    transform: translateY(-5px);
-}
-
-.metric-title {
-    color: #94a3b8;
-    font-size: 14px;
-    margin-bottom: 5px;
-}
-
-.metric-value {
-    color: white;
-    font-size: 32px;
-    font-weight: 700;
-}
-
-.chart-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 22px;
-    padding: 20px;
-    margin-bottom: 20px;
-}
-
-.prediction-box {
-    background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.12));
-    border: 1px solid rgba(255,255,255,0.08);
-    padding: 35px;
-    border-radius: 24px;
-    backdrop-filter: blur(16px);
-    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
-    margin-top: 20px;
-}
-
-.stButton > button {
-    width: 100%;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: white;
-    border: none;
-    border-radius: 14px;
-    padding: 0.8rem 1rem;
-    font-weight: 600;
-    font-size: 16px;
-    transition: 0.3s ease;
-}
-
-.stButton > button:hover {
-    transform: scale(1.02);
-    box-shadow: 0 8px 25px rgba(99,102,241,0.4);
-}
-
-.stSelectbox, .stSlider {
-    background: rgba(255,255,255,0.03);
-    border-radius: 12px;
-    padding: 6px;
-}
-
-[data-testid="stDataFrame"] {
-    border-radius: 18px;
-    overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.08);
-}
-
-hr {
-    border-color: rgba(255,255,255,0.08);
-}
-
+    .main { background-color: #0e1117; }
+    .metric-card {
+        background: linear-gradient(135deg, #1e3a5f, #2d6a9f);
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        margin: 5px;
+    }
+    .stButton > button {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 25px;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    .prediction-box {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        padding: 25px;
+        border-radius: 15px;
+        border-left: 5px solid #e74c3c;
+        margin: 10px 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# LOAD DATA
-# ==========================================
+# ---- Load Data & Models ----
 @st.cache_data
 def load_data():
     exercise = pd.read_csv('data/exercise.csv')
     calories = pd.read_csv('data/calories.csv')
     df = pd.merge(exercise, calories, on='User_ID')
-
     heart = pd.read_csv('data/heart.csv')
-
     return df, heart
-
 
 @st.cache_resource
 def load_models():
     cal_model = joblib.load('models/calorie_model.pkl')
     heart_model = joblib.load('models/heart_model.pkl')
     gender_encoder = joblib.load('models/gender_encoder.pkl')
-
     return cal_model, heart_model, gender_encoder
-
-
-plot_template = "plotly_dark"
 
 df, heart = load_data()
 cal_model, heart_model, gender_encoder = load_models()
 
-# ==========================================
-# SIDEBAR
-# ==========================================
-st.sidebar.markdown("""
-<div style="text-align:center; padding: 10px 0 25px 0;">
-    <h1 style="margin-bottom:0; color:white;">FitIQ</h1>
-    <p style="color:#94a3b8; margin-top:0;">
-        Health Intelligence Platform
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
+# ---- Sidebar Navigation ----
+st.sidebar.image("https://img.icons8.com/emoji/96/flexed-biceps.png", width=80)
+st.sidebar.title("💪 FitIQ")
+st.sidebar.markdown("**Health & Fitness Intelligence**")
 st.sidebar.divider()
 
-page = st.sidebar.radio(
-    "Navigation",
-    [
-        "🏠 Dashboard",
-        "🔥 Calorie Predictor",
-        "❤️ Heart Risk Analyzer",
-        "📊 Data Explorer"
-    ]
-)
+page = st.sidebar.radio("Navigate", [
+    "🏠 Dashboard",
+    "🔥 Calorie Predictor",
+    "❤️ Heart Risk Analyzer",
+    "📊 Data Explorer"
+])
 
-# ==========================================
-# DASHBOARD
-# ==========================================
+# ==============================
+# PAGE 1 — DASHBOARD
+# ==============================
 if page == "🏠 Dashboard":
+    st.title("💪 FitIQ — Health & Fitness Intelligence")
+    st.markdown("*Your personal AI-powered health analytics platform*")
+    st.divider()
 
-    st.markdown("""
-    <div style="padding-bottom:25px;">
-        <div class="hero-title">FitIQ Intelligence</div>
-        <div class="hero-subtitle">
-            AI-powered health analytics platform designed for smarter fitness and wellness insights.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # METRICS
+    # Metric Cards
     col1, col2, col3, col4 = st.columns(4)
+    col1.metric("👥 Users Analyzed", f"{df['User_ID'].nunique():,}")
+    col2.metric("🏋️ Workouts Tracked", f"{len(df):,}")
+    col3.metric("🔥 Avg Calories Burned", f"{df['Calories'].mean():.0f}")
+    col4.metric("💓 Avg Heart Rate", f"{df['Heart_Rate'].mean():.0f} bpm")
 
-    metrics = [
-        ("👥 Users Analyzed", f"{df['User_ID'].nunique():,}"),
-        ("🏋️ Workouts Tracked", f"{len(df):,}"),
-        ("🔥 Avg Calories", f"{df['Calories'].mean():.0f}"),
-        ("💓 Avg Heart Rate", f"{df['Heart_Rate'].mean():.0f} bpm")
-    ]
+    st.divider()
 
-    for col, metric in zip([col1, col2, col3, col4], metrics):
-        with col:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-title">{metric[0]}</div>
-                <div class="metric-value">{metric[1]}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # CHARTS
+    # Chart 1 - Calories by Gender
     col1, col2 = st.columns(2)
 
     with col1:
-        fig1 = px.box(
-            df,
-            x='Gender',
-            y='Calories',
-            color='Gender',
-            template=plot_template,
-            title='Calorie Burn Distribution by Gender'
-        )
+        st.subheader("🔥 Calories Burned by Gender")
+        fig1 = px.box(df, x='Gender', y='Calories',
+                      color='Gender',
+                      color_discrete_map={'male': '#3498db', 'female': '#e91e8c'},
+                      title='Calorie Distribution by Gender')
         st.plotly_chart(fig1, use_container_width=True)
 
     with col2:
-        fig2 = px.scatter(
-            df,
-            x='Duration',
-            y='Calories',
-            color='Gender',
-            opacity=0.7,
-            template=plot_template,
-            title='Workout Duration vs Calories Burned'
-        )
+        st.subheader("⏱️ Duration vs Calories")
+        fig2 = px.scatter(df, x='Duration', y='Calories',
+                          color='Gender', opacity=0.6,
+                          color_discrete_map={'male': '#3498db', 'female': '#e91e8c'},
+                          title='Workout Duration vs Calories Burned')
         st.plotly_chart(fig2, use_container_width=True)
 
+    # Chart 2 - Age Distribution
     col3, col4 = st.columns(2)
 
     with col3:
-        fig3 = px.histogram(
-            df,
-            x='Age',
-            color='Gender',
-            nbins=25,
-            template=plot_template,
-            title='User Age Distribution'
-        )
+        st.subheader("👤 Age Distribution of Users")
+        fig3 = px.histogram(df, x='Age', nbins=20,
+                            color='Gender',
+                            color_discrete_map={'male': '#3498db', 'female': '#e91e8c'},
+                            title='User Age Distribution')
         st.plotly_chart(fig3, use_container_width=True)
 
     with col4:
-        fig4 = px.scatter(
-            df,
-            x='Heart_Rate',
-            y='Calories',
-            color='Gender',
-            opacity=0.7,
-            template=plot_template,
-            title='Heart Rate vs Calories Burned'
-        )
+        st.subheader("💓 Heart Rate vs Calories")
+        fig4 = px.scatter(df, x='Heart_Rate', y='Calories',
+                          color='Gender', opacity=0.6,
+                          color_discrete_map={'male': '#3498db', 'female': '#e91e8c'},
+                          title='Heart Rate vs Calories Burned')
         st.plotly_chart(fig4, use_container_width=True)
 
-# ==========================================
-# CALORIE PREDICTOR
-# ==========================================
-elif page == "🔥 Calorie Predictor":
+    # Heart disease summary
+    st.divider()
+    st.subheader("❤️ Heart Disease Dataset Overview")
+    col5, col6 = st.columns(2)
 
-    st.markdown("""
-    <div style="padding-bottom:25px;">
-        <div class="hero-title">Calorie Burn Predictor</div>
-        <div class="hero-subtitle">
-            Estimate calorie expenditure using AI-powered workout analytics.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    with col5:
+        hd_counts = heart['target'].value_counts().reset_index()
+        hd_counts.columns = ['Status', 'Count']
+        hd_counts['Status'] = hd_counts['Status'].map(
+            {0: 'No Disease', 1: 'Has Disease'})
+        fig5 = px.pie(hd_counts, values='Count', names='Status',
+                      color_discrete_sequence=['#2ecc71', '#e74c3c'],
+                      title='Heart Disease Distribution')
+        st.plotly_chart(fig5, use_container_width=True)
+
+    with col6:
+        fig6 = px.box(heart, x='target', y='age',
+                      color='target',
+                      color_discrete_map={0: '#2ecc71', 1: '#e74c3c'},
+                      labels={'target': 'Heart Disease', 'age': 'Age'},
+                      title='Age Distribution by Heart Disease Status')
+        st.plotly_chart(fig6, use_container_width=True)
+
+# ==============================
+# PAGE 2 — CALORIE PREDICTOR
+# ==============================
+elif page == "🔥 Calorie Predictor":
+    st.title("🔥 Calorie Burn Predictor")
+    st.markdown("*Enter your workout details to predict calories burned*")
+    st.divider()
 
     col1, col2 = st.columns(2)
 
     with col1:
         st.subheader("👤 Personal Details")
-
         gender = st.selectbox("Gender", ["male", "female"])
-        age = st.slider("Age", 15, 80, 24)
-        height = st.slider("Height (cm)", 140, 210, 172)
+        age = st.slider("Age", 15, 80, 25)
+        height = st.slider("Height (cm)", 140, 210, 170)
         weight = st.slider("Weight (kg)", 40, 150, 70)
 
     with col2:
         st.subheader("🏋️ Workout Details")
+        duration = st.slider("Workout Duration (minutes)", 5, 120, 30)
+        heart_rate = st.slider("Average Heart Rate (bpm)", 60, 200, 120)
+        body_temp = st.slider("Body Temperature (°C)", 36.0, 42.0, 38.0, 0.1)
 
-        duration = st.slider("Workout Duration", 5, 120, 30)
-        heart_rate = st.slider("Average Heart Rate", 60, 200, 120)
-        body_temp = st.slider("Body Temperature", 36.0, 42.0, 38.0, 0.1)
+    st.divider()
 
-    if st.button("🔥 Generate Prediction"):
-
+    if st.button("🔥 Predict Calories Burned"):
+        # Encode gender
         gender_encoded = gender_encoder.transform([gender])[0]
 
+        # Make prediction
         input_data = np.array([[gender_encoded, age, height, weight,
                                 duration, heart_rate, body_temp]])
-
         prediction = cal_model.predict(input_data)[0]
 
+        # Display result
         st.markdown(f"""
         <div class="prediction-box">
-            <h2 style="text-align:center; color:#c4b5fd;">
-                Estimated Calories Burned
+            <h2 style="color: #e74c3c; text-align: center;">
+                🔥 Estimated Calories Burned
             </h2>
-
-            <h1 style="text-align:center; font-size:72px; color:white; margin-bottom:0;">
-                {prediction:.0f}
+            <h1 style="color: white; text-align: center; font-size: 60px;">
+                {prediction:.0f} kcal
             </h1>
-
-            <p style="text-align:center; color:#94a3b8; font-size:18px;">
-                kcal during your {duration}-minute session
+            <p style="color: #aaa; text-align: center;">
+                Based on your {duration} minute workout
             </p>
         </div>
         """, unsafe_allow_html=True)
 
+        # Health tip based on calories
+        st.divider()
         if prediction < 200:
-            st.info("Your current session reflects a lighter workout intensity.")
-
+            st.info("💡 Light workout! Consider increasing duration or intensity.")
         elif prediction < 400:
-            st.success("You're maintaining a balanced and effective calorie burn.")
-
+            st.success("✅ Good workout! You're burning a solid amount of calories.")
         else:
-            st.success("Strong workout intensity detected with high energy expenditure.")
+            st.success("🏆 Excellent workout! You're burning a high amount of calories!")
 
-        fig = go.Figure(go.Indicator(
+        # Gauge chart
+        fig_gauge = go.Figure(go.Indicator(
             mode="gauge+number",
             value=prediction,
             title={'text': "Calories Burned"},
             gauge={
                 'axis': {'range': [0, 800]},
-                'bar': {'color': '#8b5cf6'},
+                'bar': {'color': "#e74c3c"},
                 'steps': [
-                    {'range': [0, 200], 'color': '#16a34a'},
-                    {'range': [200, 400], 'color': '#f59e0b'},
-                    {'range': [400, 800], 'color': '#ef4444'}
+                    {'range': [0, 200], 'color': "#2ecc71"},
+                    {'range': [200, 400], 'color': "#f39c12"},
+                    {'range': [400, 800], 'color': "#e74c3c"}
                 ]
             }
         ))
+        st.plotly_chart(fig_gauge, use_container_width=True)
 
-        fig.update_layout(template=plot_template)
-
-        st.plotly_chart(fig, use_container_width=True)
-
-# ==========================================
-# HEART RISK ANALYZER
-# ==========================================
+# ==============================
+# PAGE 3 — HEART RISK ANALYZER
+# ==============================
 elif page == "❤️ Heart Risk Analyzer":
-
-    st.markdown("""
-    <div style="padding-bottom:25px;">
-        <div class="hero-title">Heart Risk Analyzer</div>
-        <div class="hero-subtitle">
-            Evaluate cardiovascular indicators using predictive health intelligence.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.warning("Educational use only. Please consult a certified medical professional for diagnosis.")
+    st.title("❤️ Heart Disease Risk Analyzer")
+    st.markdown("*Enter your health vitals to assess heart disease risk*")
+    st.warning("⚠️ This is for educational purposes only. Always consult a doctor.")
+    st.divider()
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
+        st.subheader("👤 Basic Info")
         age = st.slider("Age", 20, 80, 45)
         sex = st.selectbox("Sex", ["Male", "Female"])
-        cp = st.selectbox("Chest Pain Type", [0, 1, 2, 3])
+        cp = st.selectbox("Chest Pain Type",
+                          [0, 1, 2, 3],
+                          help="0=Typical Angina, 1=Atypical, 2=Non-anginal, 3=Asymptomatic")
 
     with col2:
+        st.subheader("🩺 Vitals")
         trestbps = st.slider("Resting Blood Pressure", 90, 200, 120)
-        chol = st.slider("Cholesterol", 100, 600, 200)
-        fbs = st.selectbox("Fasting Blood Sugar > 120", [0, 1])
-        restecg = st.selectbox("Rest ECG", [0, 1, 2])
+        chol = st.slider("Cholesterol (mg/dl)", 100, 600, 200)
+        fbs = st.selectbox("Fasting Blood Sugar > 120 mg/dl",
+                           [0, 1], format_func=lambda x: "Yes" if x == 1 else "No")
+        restecg = st.selectbox("Resting ECG Results", [0, 1, 2])
 
     with col3:
-        thalach = st.slider("Max Heart Rate", 70, 210, 150)
-        exang = st.selectbox("Exercise Induced Angina", [0, 1])
+        st.subheader("💓 Heart Metrics")
+        thalach = st.slider("Max Heart Rate Achieved", 70, 210, 150)
+        exang = st.selectbox("Exercise Induced Angina",
+                             [0, 1], format_func=lambda x: "Yes" if x == 1 else "No")
         oldpeak = st.slider("ST Depression", 0.0, 6.0, 1.0, 0.1)
-        slope = st.selectbox("Slope", [0, 1, 2])
-        ca = st.selectbox("Major Vessels", [0, 1, 2, 3])
+        slope = st.selectbox("Slope of Peak ST Segment", [0, 1, 2])
+        ca = st.selectbox("Major Vessels Colored by Fluoroscopy", [0, 1, 2, 3])
         thal = st.selectbox("Thalassemia", [0, 1, 2, 3])
-        if st.button("❤️ Analyze Risk"):
 
-        sex_encoded = 1 if sex == "Male" else 0
+    st.divider()
 
+    sex_encoded = 1 if sex == "Male" else 0
+
+    if st.button("❤️ Analyze Heart Risk"):
         input_data = np.array([[age, sex_encoded, cp, trestbps, chol,
-                                fbs, restecg, thalach, exang,
-                                oldpeak, slope, ca, thal]])
-
+                                fbs, restecg, thalach, exang, oldpeak,
+                                slope, ca, thal]])
         prediction = heart_model.predict(input_data)[0]
         probability = heart_model.predict_proba(input_data)[0]
-
         risk_pct = probability[1] * 100
 
         if prediction == 1:
-
-            title = "Elevated Cardiovascular Risk Detected"
-            subtitle = "Professional medical consultation is strongly recommended."
-            color = "#ef4444"
-
+            st.markdown(f"""
+            <div class="prediction-box">
+                <h2 style="color:#e74c3c; text-align:center;">
+                    ⚠️ Elevated Heart Disease Risk Detected
+                </h2>
+                <h1 style="color:white; text-align:center; font-size:50px;">
+                    {risk_pct:.1f}% Risk
+                </h1>
+                <p style="color:#aaa; text-align:center;">
+                    Please consult a cardiologist for proper evaluation
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
         else:
+            st.markdown(f"""
+            <div class="prediction-box">
+                <h2 style="color:#2ecc71; text-align:center;">
+                    ✅ Low Heart Disease Risk
+                </h2>
+                <h1 style="color:white; text-align:center; font-size:50px;">
+                    {risk_pct:.1f}% Risk
+                </h1>
+                <p style="color:#aaa; text-align:center;">
+                    Keep maintaining your healthy lifestyle!
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
 
-            title = "Relatively Stable Cardiovascular Indicators"
-            subtitle = "Current health indicators appear comparatively balanced."
-            color = "#16a34a"
-
-        st.markdown(f"""
-        <div class="prediction-box">
-            <h2 style="text-align:center; color:{color};">
-                {title}
-            </h2>
-
-            <h1 style="text-align:center; color:white; font-size:70px;">
-                {risk_pct:.1f}%
-            </h1>
-
-            <p style="text-align:center; color:#94a3b8;">
-                {subtitle}
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        fig = go.Figure(go.Indicator(
-            mode="gauge+number",
+        # Risk gauge
+        fig_gauge = go.Figure(go.Indicator(
+            mode="gauge+number+delta",
             value=risk_pct,
-            title={'text': "Heart Risk Probability"},
+            title={'text': "Heart Disease Risk %"},
             gauge={
                 'axis': {'range': [0, 100]},
-                'bar': {'color': color},
+                'bar': {'color': "#e74c3c" if prediction == 1 else "#2ecc71"},
                 'steps': [
-                    {'range': [0, 30], 'color': '#16a34a'},
-                    {'range': [30, 60], 'color': '#f59e0b'},
-                    {'range': [60, 100], 'color': '#ef4444'}
-                ]
+                    {'range': [0, 30], 'color': "#2ecc71"},
+                    {'range': [30, 60], 'color': "#f39c12"},
+                    {'range': [60, 100], 'color': "#e74c3c"}
+                ],
+                'threshold': {
+                    'line': {'color': "white", 'width': 4},
+                    'thickness': 0.75,
+                    'value': 50
+                }
             }
         ))
+        st.plotly_chart(fig_gauge, use_container_width=True)
 
-        fig.update_layout(template=plot_template)
-
-        st.plotly_chart(fig, use_container_width=True)
-
-# ==========================================
-# DATA EXPLORER
-# ==========================================
+# ==============================
+# PAGE 4 — DATA EXPLORER
+# ==============================
 elif page == "📊 Data Explorer":
+    st.title("📊 Raw Data Explorer")
+    st.divider()
 
-    st.markdown("""
-    <div style="padding-bottom:25px;">
-        <div class="hero-title">Data Explorer</div>
-        <div class="hero-subtitle">
-            Explore the datasets powering FitIQ Intelligence.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    dataset = st.radio(
-        "Select Dataset",
-        ["Exercise & Calories", "Heart Disease"],
-        horizontal=True
-    )
+    dataset = st.radio("Select Dataset",
+                       ["Exercise & Calories", "Heart Disease"],
+                       horizontal=True)
 
     if dataset == "Exercise & Calories":
-
-        st.subheader("Exercise & Calories Dataset")
-
+        st.subheader("🏋️ Exercise & Calories Dataset")
         col1, col2, col3 = st.columns(3)
-
         col1.metric("Total Records", f"{len(df):,}")
         col2.metric("Male Users", f"{(df['Gender']=='male').sum():,}")
         col3.metric("Female Users", f"{(df['Gender']=='female').sum():,}")
-
         st.dataframe(df, use_container_width=True)
 
+        # Download button
         csv = df.to_csv(index=False)
-
-        st.download_button(
-            "📥 Download Dataset",
-            csv,
-            "exercise_calories.csv",
-            "text/csv"
-        )
-
+        st.download_button("📥 Download Data", csv,
+                           "exercise_calories.csv", "text/csv")
     else:
-
-        st.subheader("Heart Disease Dataset")
-
+        st.subheader("❤️ Heart Disease Dataset")
         col1, col2, col3 = st.columns(3)
-
         col1.metric("Total Records", f"{len(heart):,}")
-        col2.metric("High Risk Cases", f"{(heart['target']==1).sum():,}")
-        col3.metric("Low Risk Cases", f"{(heart['target']==0).sum():,}")
-
+        col2.metric("Has Disease", f"{(heart['target']==1).sum()}")
+        col3.metric("No Disease", f"{(heart['target']==0).sum()}")
         st.dataframe(heart, use_container_width=True)
 
         csv = heart.to_csv(index=False)
+        st.download_button("📥 Download Data", csv,
+                           "heart_disease.csv", "text/csv")
 
-        st.download_button(
-            "📥 Download Dataset",
-            csv,
-            "heart_disease.csv",
-            "text/csv"
-        )
-
-# ==========================================
-# FOOTER
-# ==========================================
+# ---- Footer ----
 st.sidebar.divider()
-
-st.sidebar.markdown("""
-<div style="font-size:14px; color:#94a3b8; text-align:center;">
-Built with Streamlit · Machine Learning · Plotly
-<br><br>
-FitIQ Intelligence © 2026
-</div>
-""", unsafe_allow_html=True)
+st.sidebar.markdown("Built with ❤️ using Python & Streamlit")
+st.sidebar.markdown("📊 Data Source: Kaggle")
